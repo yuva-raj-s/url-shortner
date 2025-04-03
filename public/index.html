@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <style>
+        :root {
+            --primary-color: #00ff9d;
+            --secondary-color: #00b8ff;
+            --background-dark: #0a0a0a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--background-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 157, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 184, 255, 0.1) 0%, transparent 20%);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(0, 255, 157, 0.1),
+                transparent
+            );
+            transform: rotate(45deg);
+            animation: shine 8s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 3rem;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .form-group {
+            margin-bottom: 35px;
+            position: relative;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 18px 25px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="url"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.2);
+        }
+
+        input[type="url"]::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        button {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: var(--background-dark);
+            padding: 18px 35px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 157, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #result {
+            margin-top: 40px;
+            padding: 25px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #result p {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        #shortUrl {
+            color: var(--primary-color);
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            background: var(--glass-bg);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary-color);
+            color: var(--background-dark);
+            border-color: var(--primary-color);
+        }
+
+        .copy-btn::before {
+            content: '📋';
+        }
+
+        .copy-btn.copied::before {
+            content: '✓';
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            input[type="url"] {
+                padding: 15px 20px;
+                font-size: 1rem;
+            }
+
+            button {
+                padding: 15px 30px;
+                font-size: 1rem;
+            }
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 12px 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--glass-border);
+            z-index: 1000;
+        }
+
+        .footer-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .team-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .team-title {
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .team-members {
+            display: flex;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+            flex-wrap: wrap;
+        }
+
+        .team-member {
+            position: relative;
+            padding: 2px 6px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .team-member:hover {
+            color: var(--primary-color);
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .center-icon {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(0, 255, 157, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 157, 0.1);
+        }
+
+        .center-icon i {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .center-icon span {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+        }
+
+        .tech-stack {
+            display: flex;
+            gap: 15px;
+            padding: 4px 10px;
+            background: rgba(0, 184, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(0, 184, 255, 0.1);
+        }
+
+        .tech-icon {
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .tech-icon:hover {
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .footer {
+                padding: 10px 15px;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .team-section {
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .team-members {
+                justify-content: center;
+            }
+
+            .right-section {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .center-icon, .tech-stack {
+                width: auto;
+            }
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            animation: pulse 2s infinite;
+        }
+
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .header-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 20px;
+            }
+
+            .logo-icon, .header-icon {
+                font-size: 1.6rem;
+            }
+
+            .logo-text {
+                font-size: 1.2rem;
+            }
+        }
+
+        .main-content {
+            margin-top: 80px;
+            margin-bottom: 80px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            display: none;
+            z-index: 1000;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification.success {
+            background: rgba(0, 255, 157, 0.1);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .notification.error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .notification {
+                width: 90%;
+                text-align: center;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.15.1/devicon.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <i class="devicon-mongodb-plain header-icon"></i>
+            <a href="/" class="logo">
+                <span class="logo-text">URL Shortener</span>
+            </a>
+            <i class="devicon-redis-plain header-icon"></i>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="notification" id="notification"></div>
+        <div class="container">
+            <h1>URL Shortener</h1>
+            <div class="form-group">
+                <input type="url" id="longUrl" placeholder="Enter your long URL here" required>
+            </div>
+            <button onclick="shortenUrl()">Shorten URL</button>
+            <div id="result">
+                <p>Shortened URL: <span id="shortUrl"></span></p>
+                <button class="copy-btn" onclick="copyToClipboard()">Copy</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="team-section">
+                <div class="team-title">Team:</div>
+                <div class="team-members">
+                    <span class="team-member">Yuvaraj S</span>
+                    <span class="team-member">Adithya K</span>
+                    <span class="team-member">Sooraj GV</span>
+                    <span class="team-member">Dayanand K</span>
+                    <span class="team-member">Jahnavi P</span>
+                </div>
+            </div>
+            <div class="right-section">
+                <div class="center-icon">
+                    <i class="devicon-github-original"></i>
+                    <span>URL Shortener</span>
+                </div>
+                <div class="tech-stack">
+                    <i class="devicon-mongodb-plain tech-icon"></i>
+                    <i class="devicon-redis-plain tech-icon"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Add event listener for the input field
+        document.getElementById('longUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                shortenUrl();
+            }
+        });
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        async function shortenUrl() {
+            const longUrl = document.getElementById('longUrl').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!longUrl) {
+                showNotification('Please enter a URL', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/get-shortened-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ longUrl: longUrl })
+                });
+
+                const data = await response.json();
+                console.log('Server response:', data);
+
+                if (data.status) {
+                    resultDiv.style.display = 'block';
+                    document.getElementById('shortUrl').textContent = data.shortUrl;
+                    showNotification('URL shortened successfully!', 'success');
+                } else {
+                    showNotification(data.message || 'Error shortening URL', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error connecting to server', 'error');
+            }
+        }
+
+        function copyToClipboard() {
+            const shortUrl = document.getElementById('shortUrl').textContent;
+            navigator.clipboard.writeText(shortUrl).then(() => {
+                showNotification('URL copied to clipboard!', 'success');
+            }).catch(err => {
+                showNotification('Failed to copy URL', 'error');
+            });
+        }
+    </script>
+</body>
+</html> 
