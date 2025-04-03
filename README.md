@@ -25,7 +25,7 @@ A modern URL shortener service built with TypeScript, Express, and MongoDB. This
 
 1. Clone the repository:
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/yuva-raj-s/url-shortner.git
 cd url-shortner
 ```
 
