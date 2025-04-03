@@ -1,5 +1,7 @@
 # URL Shortener
 
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue?style=flat-square&logo=github)](https://github.com/yuva-raj-s/url-shortner)
+
 A modern URL shortener service built with TypeScript, Express, and MongoDB. This service allows you to create shortened URLs that redirect to your original long URLs.
 
 ## Features
